@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain.fm AI Companion - Front View & Headphones</title>
+    <style>
+        :root {
+            /* Base Neutral Theme */
+            --bg-color1: rgba(255, 255, 255, 0.8);
+            --bg-color2: rgba(246, 114, 255, 0.6); 
+            --bg-color3: rgba(139, 48, 255, 0.6); 
+            --bg-color4: rgba(43, 20, 100, 0.8); 
+            
+            --inner-shadow-dark: rgba(43, 20, 100, 0.85);
+            --inner-shadow-light: rgba(255, 255, 255, 0.8);
+            --inner-edge-glow: rgba(255, 255, 255, 0.05);
+            --outer-glow-1: rgba(246, 114, 255, 0.4);
+            --outer-glow-2: rgba(139, 48, 255, 0.2);
+            
+            /* Motion Dynamics */
+            --wave-speed: 3s;
+            --float-speed: 4s;
+            --float-y: -12px;
+            --float-x: 0px;
+            --tilt-deg: 0deg;
+            
+            /* Facial Dynamics */
+            --eye-height: 18px;
+            --eye-top: 0px;
+            --eye-glow-color: rgba(139, 48, 255, 0.8);
+            --scan-opacity: 0;
+            --pulse-anim: none;
+            --hp-pulse-anim: none; /* Syncs headphones with orb scale */
+        }
+
+        body {
+            margin: 0; padding: 0; 
+            background: linear-gradient(to bottom, #1d1128 0%, #0d0c11 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; color: #ffffff; overflow: hidden;
+        }
+
+        /* --- Scene Setup --- */
+        .scene {
+            width: 400px; height: 350px; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .character-group {
+            position: relative; width: 160px; height: 160px;
+            display: flex; align-items: center; justify-content: center;
+            animation: dynamic-float var(--float-speed) ease-in-out infinite;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+
+        /* --- Global Animations --- */
+        @keyframes dynamic-float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(var(--float-x), var(--float-y)) rotate(var(--tilt-deg)); }
+        }
+        @keyframes shadow-scale { 
+            0%, 100% { transform: scale(1) translateX(0); opacity: 0.6; } 
+            50% { transform: scale(0.7) translateX(calc(var(--float-x) * 0.5)); opacity: 0.3; } 
+        }
+        @keyframes wave-slide { 0% { transform: translateX(0); } 100% { transform: translateX(-150px); } }
+        @keyframes blink { 0%, 92%, 98%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+        
+        @keyframes orb-pulse {
+            0%, 100% { transform: scale(1); box-shadow: inset -20px -20px 45px var(--inner-shadow-dark), inset 15px 15px 30px var(--inner-shadow-light), inset 0 0 20px 5px var(--inner-edge-glow), 0 0 25px var(--outer-glow-1), 0 0 60px var(--outer-glow-2); }
+            50% { transform: scale(1.04); box-shadow: inset -25px -25px 50px var(--inner-shadow-dark), inset 20px 20px 40px var(--inner-shadow-light), inset 0 0 25px 8px var(--inner-edge-glow), 0 0 40px var(--outer-glow-1), 0 0 80px var(--outer-glow-2); }
+        }
+        
+        /* Headphones pulse keyframes scaled up natively */
+        @keyframes hp-pulse {
+            0%, 100% { transform: scale(1.1); } 
+            50% { transform: scale(1.144); } /* 1.1 base * 1.04 expansion */
+        }
+
+        /* --- The Orb --- */
+        .orb {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            background: radial-gradient(circle at 50% 30%, var(--bg-color1) 0%, var(--bg-color2) 25%, var(--bg-color3) 70%, var(--bg-color4) 100%);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: inset -20px -20px 45px var(--inner-shadow-dark), inset 15px 15px 30px var(--inner-shadow-light), inset 0 0 20px 5px var(--inner-edge-glow), 0 0 25px var(--outer-glow-1), 0 0 60px var(--outer-glow-2); 
+            position: relative; overflow: hidden; 
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: var(--pulse-anim);
+            z-index: 5;
+        }
+
+        .orb::before {
+            content: ''; position: absolute; inset: 0; border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay; opacity: 0.25; pointer-events: none; z-index: 1;
+        }
+
+        .waves { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.85; mix-blend-mode: overlay; z-index: 2; pointer-events: none; }
+        .waves g { animation: wave-slide var(--wave-speed) linear infinite; transition: animation-duration 0.8s ease; }
+
+        .scan-line {
+            position: absolute; left: 0; width: 100%; height: 40%;
+            background: linear-gradient(to bottom, rgba(0, 255, 170, 0) 0%, rgba(0, 255, 170, 0.1) 80%, rgba(0, 255, 170, 0.8) 100%);
+            border-bottom: 2px solid #ffffff; opacity: var(--scan-opacity);
+            animation: scan-sweep 2.5s ease-in-out infinite alternate; transition: opacity 0.4s ease; z-index: 5; pointer-events: none;
+        }
+        @keyframes scan-sweep { 0% { top: -40%; } 100% { top: 100%; } }
+
+        /* --- Headphones Setup --- */
+        .headphones {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+            z-index: 15; pointer-events: none;
+            transform: scale(1.1); /* 1.1x larger setup */
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: var(--hp-pulse-anim);
+        }
+
+        .headband {
+            position: absolute; box-sizing: border-box;
+            width: 160px; height: 90px;
+            left: 0px; top: -14px;
+            border-radius: 90px 90px 0 0;
+            border: 6px solid rgba(255, 255, 255, 0.8);
+            border-bottom: none;
+            box-shadow: 0 -3px 8px rgba(255, 255, 255, 0.4), inset 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .earcup {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 24px; height: 70px; border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            /* Glow ties into orb's outer glow settings dynamically */
+            box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px var(--outer-glow-1);
+            transition: box-shadow 0.8s ease;
+        }
+        
+        .earcup::after { /* Shiny inner hardware */
+            content: ''; position: absolute;
+            top: 15%; bottom: 15%; width: 4px; border-radius: 4px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .earcup.left { left: -12px; }
+        .earcup.left::after { right: 4px; }
+        
+        .earcup.right { right: -12px; }
+        .earcup.right::after { left: 4px; }
+
+        /* --- Face (Centered & Front View) --- */
+        .face { 
+            position: absolute; width: 75px; height: 35px; 
+            left: 50%; top: 65px; 
+            transform: translateX(-50%); /* Keeps face dead center */
+            z-index: 10; transition: opacity 0.6s ease; 
+        }
+        
+        .eyes-wrapper { position: absolute; width: 100%; height: 100%; transition: transform 0.4s ease; }
+        .eye {
+            width: 14px; height: var(--eye-height); background: rgba(255, 255, 255, 0.35); 
+            border-radius: 50%; position: absolute; transform-origin: 50% 70%;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px var(--eye-glow-color);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); animation: blink 4s infinite;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .eye.left { left: 0; top: calc(3px + var(--eye-top)); } 
+        .eye.right { right: 0; top: var(--eye-top); }
+        .eye::after { content: ''; position: absolute; width: 5px; height: 6px; background: #ffffff; border-radius: 50%; top: 2px; right: 3px; }
+        .eye::before { content: ''; position: absolute; width: 2px; height: 2px; background: #ffffff; border-radius: 50%; top: 10px; right: 8px; }
+
+        .floor-shadow {
+            position: absolute; bottom: 30px; width: 120px; height: 12px;
+            background: rgba(0, 0, 0, 0.6); border-radius: 50%;
+            animation: shadow-scale var(--float-speed) ease-in-out infinite; filter: blur(6px);
+            transition: animation-duration 0.8s ease;
+        }
+
+        /* ========================================================= */
+        /* --- VISUAL ASSETS (Decorations for states) --- */
+        /* ========================================================= */
+
+        .asset { position: absolute; opacity: 0; visibility: hidden; transition: all 0.8s ease; pointer-events: none; }
+
+        /* CREATIVITY: Sparks */
+        .sparks { width: 100%; height: 100%; z-index: 15; transform: scale(0.8); }
+        .spark { position: absolute; color: #ffeb3b; font-size: 20px; filter: drop-shadow(0 0 5px #ff8c42); }
+        .spark:nth-child(1) { top: -20px; left: 10px; animation: pop-spark 2s infinite; }
+        .spark:nth-child(2) { top: 30px; right: -25px; animation: pop-spark 2.5s infinite 0.5s; font-size: 14px; }
+        .spark:nth-child(3) { bottom: -10px; left: -15px; animation: pop-spark 2.2s infinite 1.2s; font-size: 18px;}
+        @keyframes pop-spark { 0% { transform: scale(0) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } 100% { transform: scale(0) rotate(90deg); opacity: 0; } }
+
+        /* MEDITATE: Zen Ripples */
+        .zen-rings { width: 100%; height: 100%; z-index: -1; display: flex; align-items: center; justify-content: center; transform: scale(0.8); }
+        .zen-ring { position: absolute; border: 2px solid rgba(72, 203, 172, 0.4); border-radius: 50%; animation: ripple-expand 6s infinite; }
+        .zen-ring:nth-child(2) { animation-delay: 2s; } .zen-ring:nth-child(3) { animation-delay: 4s; }
+        @keyframes ripple-expand { 0% { width: 100%; height: 100%; opacity: 1; } 100% { width: 250%; height: 250%; opacity: 0; } }
+
+        /* SLEEP: Zzzs */
+        .zzzs { width: 100%; height: 100%; z-index: -1; transform: scale(0.8); }
+        .z-letter { position: absolute; color: rgba(0, 210, 255, 0.8); font-family: monospace; font-weight: bold; font-size: 24px; top: -10px; left: 50%; opacity: 0; transform: translateX(-50%); animation: drift-zzz 4s infinite linear; }
+        .z-letter:nth-child(2) { animation-delay: 1.5s; font-size: 18px; }
+        .z-letter:nth-child(3) { animation-delay: 3s; font-size: 14px; }
+        @keyframes drift-zzz { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { opacity: 1; transform: translate(calc(-50% - 15px), -20px) scale(0.8); } 80% { opacity: 1; transform: translate(calc(-50% + 20px), -60px) scale(1.1); } 100% { opacity: 0; transform: translate(calc(-50% - 10px), -80px) scale(1.2); } }
+
+        /* DEEP WORK: Energy Aura */
+        .energy-aura { width: 100%; height: 100%; z-index: -1; border-radius: 50%; box-shadow: 0 0 0 0 rgba(255, 59, 124, 0); animation: pulse-ring 2s infinite; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 124, 0.8); } 70% { box-shadow: 0 0 0 30px rgba(255, 59, 124, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 124, 0); } }
+
+        /* SCANNING: HUD Brackets */
+        .hud-brackets { width: 115%; height: 115%; position: absolute; z-index: 20; }
+        .hud-brackets::before, .hud-brackets::after { content: ''; position: absolute; width: 100%; height: 100%; border: 2px solid transparent; }
+        .hud-brackets::before { border-top-color: rgba(0, 255, 170, 0.8); border-left-color: rgba(0, 255, 170, 0.8); left: -5%; top: -5%; width: 25%; height: 25%; border-top-left-radius: 10px; }
+        .hud-brackets::after { border-bottom-color: rgba(0, 255, 170, 0.8); border-right-color: rgba(0, 255, 170, 0.8); right: -5%; bottom: -5%; width: 25%; height: 25%; border-bottom-right-radius: 10px; }
+
+
+        /* ========================================================= */
+        /* --- STATES ACTIVATION & THEMES --- */
+        /* ========================================================= */
+        
+        /* 1. PULSING (Deep Work - Intense Focus) */
+        .state-pulsing {
+            --bg-color2: rgba(255, 59, 124, 0.6); --bg-color3: rgba(158, 0, 255, 0.6); --bg-color4: rgba(60, 0, 100, 0.7);
+            --inner-shadow-dark: rgba(60, 0, 100, 0.85);
+            --outer-glow-1: rgba(255, 59, 124, 0.5); --outer-glow-2: rgba(158, 0, 255, 0.3);
+            --eye-glow-color: rgba(255, 59, 124, 0.9);
+            --pulse-anim: orb-pulse 2s ease-in-out infinite; 
+            --hp-pulse-anim: hp-pulse 2s ease-in-out infinite;
+            --float-speed: 2s; --float-y: -8px; 
+        }
+        .state-pulsing .energy-aura { opacity: 1; visibility: visible; }
+
+        /* 2. EXCITED (Creativity - Erratic Wobble) */
+        .state-excited {
+            --bg-color2: rgba(255, 140, 66, 0.6); --bg-color3: rgba(255, 42, 112, 0.6); --bg-color4: rgba(120, 0, 80, 0.7);
+            --inner-shadow-dark: rgba(120, 0, 80, 0.85); --eye-glow-color: rgba(255, 140, 66, 1);
+            --wave-speed: 1s; --eye-height: 22px; 
+            --float-speed: 1.5s; --float-y: -25px; --tilt-deg: 8deg; 
+        }
+        .state-excited .eyes-wrapper { animation: excited-bounce 1.5s ease-in-out infinite; }
+        .state-excited .sparks { opacity: 1; visibility: visible; transform: scale(1); }
+
+        /* 3. RELAX (Soft figure-8 hammock sway) */
+        .state-relax {
+            --bg-color2: rgba(255, 170, 170, 0.6); --bg-color3: rgba(170, 170, 255, 0.6); --bg-color4: rgba(50, 40, 100, 0.7);
+            --inner-shadow-dark: rgba(50, 40, 100, 0.80); --eye-glow-color: rgba(170, 170, 255, 0.8);
+            --wave-speed: 5s; --eye-height: 12px; --eye-top: 4px; 
+            --float-speed: 5s; --float-y: -8px; --float-x: 16px; 
+        }
+
+        /* 4. MEDITATE (Massive zen levitation) */
+        .state-meditate {
+            --bg-color2: rgba(72, 203, 172, 0.6); --bg-color3: rgba(147, 112, 219, 0.6); --bg-color4: rgba(15, 25, 40, 0.8);
+            --inner-shadow-dark: rgba(15, 25, 40, 0.85); --eye-glow-color: rgba(72, 203, 172, 0.8);
+            --wave-speed: 8s; --eye-height: 15px; --eye-top: -3px; 
+            --float-speed: 7s; --float-y: -30px; 
+            --pulse-anim: orb-pulse 7s ease-in-out infinite; 
+            --hp-pulse-anim: hp-pulse 7s ease-in-out infinite;
+        }
+        .state-meditate .eye { animation: blink 10s infinite; }
+        .state-meditate .zen-rings { opacity: 1; visibility: visible; transform: scale(1); }
+
+        /* 5. CALMING (Sleep - Heavy Sink & No Eyes) */
+        .state-calming {
+            --bg-color2: rgba(0, 210, 255, 0.5); --bg-color3: rgba(58, 123, 213, 0.6); --bg-color4: rgba(10, 15, 40, 0.8);
+            --inner-shadow-dark: rgba(10, 15, 40, 0.7); --inner-edge-glow: rgba(255, 255, 255, 0.8); 
+            --eye-glow-color: rgba(0, 210, 255, 0.4);
+            --wave-speed: 8s; 
+            --float-speed: 6s; --float-y: 5px; 
+        }
+        .state-calming .zzzs { opacity: 1; visibility: visible; transform: scale(1); }
+        .state-calming .face { opacity: 0; }
+
+        /* 6. SCANNING (Rigid target lock) */
+        .state-scanning {
+            --bg-color2: rgba(0, 255, 170, 0.6); --bg-color3: rgba(0, 150, 136, 0.6); --bg-color4: rgba(0, 50, 60, 0.8);
+            --inner-shadow-dark: rgba(0, 50, 60, 0.85); --eye-glow-color: rgba(0, 255, 170, 1);
+            --wave-speed: 1.2s; --scan-opacity: 1; 
+            --float-speed: 4s; --float-y: 0px; 
+        }
+        .state-scanning .eyes-wrapper { animation: scan-look 3s cubic-bezier(0.8, 0, 0.2, 1) infinite; }
+        .state-scanning .hud-brackets { opacity: 1; visibility: visible; animation: pulse-ring 2s infinite; }
+
+        @keyframes scan-look { 0%, 100% { transform: translateX(0); } 15%, 35% { transform: translateX(-10px); } 50%, 70% { transform: translateX(10px); } 85% { transform: translateX(0); } }
+        @keyframes excited-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        /* --- UI Controls --- */
+        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 20px; z-index: 20; max-width: 500px; }
+        button { padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(8px); color: rgba(255, 255, 255, 0.7); }
+        button:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); color: #ffffff; }
+        button.active { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+        button.active[onclick*="'neutral'"] { border-color: rgba(139, 48, 255, 0.6); box-shadow: 0 0 15px rgba(139, 48, 255, 0.3); }
+        button.active[onclick*="'pulsing'"] { border-color: rgba(255, 59, 124, 0.6); box-shadow: 0 0 15px rgba(255, 59, 124, 0.3); }
+        button.active[onclick*="'excited'"] { border-color: rgba(255, 140, 66, 0.6); box-shadow: 0 0 15px rgba(255, 140, 66, 0.3); }
+        button.active[onclick*="'relax'"] { border-color: rgba(170, 170, 255, 0.6); box-shadow: 0 0 15px rgba(170, 170, 255, 0.3); }
+        button.active[onclick*="'meditate'"] { border-color: rgba(72, 203, 172, 0.6); box-shadow: 0 0 15px rgba(72, 203, 172, 0.4); }
+        button.active[onclick*="'calming'"] { border-color: rgba(0, 210, 255, 0.6); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+        button.active[onclick*="'scanning'"] { border-color: rgba(0, 255, 170, 0.6); box-shadow: 0 0 15px rgba(0, 255, 170, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="scene">
+        <div class="floor-shadow"></div>
+        
+        <div class="character-group" id="character">
+            
+            <!-- Asset: Deep Work Energy Aura -->
+            <div class="asset energy-aura"></div>
+            
+            <!-- Asset: Meditate Zen Rings -->
+            <div class="asset zen-rings">
+                <div class="zen-ring"></div>
+                <div class="zen-ring"></div>
+                <div class="zen-ring"></div>
+            </div>
+            
+            <!-- Asset: Scanning HUD -->
+            <div class="asset hud-brackets"></div>
+
+            <!-- New Minimal Glassy Headphones (1.1x scaling) -->
+            <div class="headphones">
+                <div class="headband"></div>
+                <div class="earcup left"></div>
+                <div class="earcup right"></div>
+            </div>
+
+            <div class="orb">
+                
+                <!-- Sleep Zzzs -->
+                <div class="asset zzzs">
+                    <span class="z-letter">z</span>
+                    <span class="z-letter">Z</span>
+                    <span class="z-letter">z</span>
+                </div>
+
+                <!-- Creativity Sparks -->
+                <div class="asset sparks">
+                    <span class="spark">✦</span>
+                    <span class="spark">✦</span>
+                    <span class="spark">✦</span>
+                </div>
+
+                <svg class="waves" viewBox="0 0 150 150" preserveAspectRatio="none">
+                    <g stroke="rgba(255,255,255,0.7)" fill="none" stroke-width="2" stroke-linecap="round">
+                        <path d="M -75 40 Q -37.5 20 0 40 T 75 40 T 150 40 T 225 40 T 300 40" filter="blur(1px)"/>
+                        <path d="M -75 75 Q -37.5 95 0 75 T 75 75 T 150 75 T 225 75 T 300 75" stroke-width="3" stroke="rgba(255,255,255,1)"/>
+                        <path d="M -75 110 Q -37.5 90 0 110 T 75 110 T 150 110 T 225 110 T 300 110" filter="blur(1px)"/>
+                    </g>
+                </svg>
+
+                <div class="scan-line"></div>
+
+                <div class="face">
+                    <div class="eyes-wrapper">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="setState('neutral', this)" class="active">Focus</button>
+        <button onclick="setState('pulsing', this)">Deep Work</button>
+        <button onclick="setState('excited', this)">Creativity</button>
+        <button onclick="setState('relax', this)">Relax</button>
+        <button onclick="setState('meditate', this)">Meditate</button>
+        <button onclick="setState('calming', this)">Sleep</button>
+        <button onclick="setState('scanning', this)">Scanning</button>
+    </div>
+
+    <script>
+        const character = document.getElementById('character');
+        const buttons = document.querySelectorAll('.controls button');
+
+        function setState(state, activeBtn) {
+            character.className = 'character-group';
+            
+            if (state !== 'neutral') {
+                character.classList.add(`state-${state}`);
+            }
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
