@@ -31,7 +31,7 @@
             --eye-glow-color: rgba(139, 48, 255, 0.8);
             --scan-opacity: 0;
             --pulse-anim: none;
-            --hp-pulse-anim: none; 
+            --hp-pulse-anim: none; /* Syncs headphones with orb scale */
         }
 
         body {
@@ -121,17 +121,17 @@
 
         .headband {
             position: absolute; box-sizing: border-box;
-            width: 160px; height: 90px;
+            width: 160px; height: 160px; /* Full circle foundation */
             left: 0px; top: -14px;
-            border-radius: 90px 90px 0 0;
+            border-radius: 50%;
             border: 6px solid rgba(255, 255, 255, 0.8);
-            border-bottom: none;
+            /* Securely clips the band exactly in half, completely destroying lower-pixel artifacts */
+            clip-path: inset(-20px -20px 50% -20px); 
             box-shadow: 0 -3px 8px rgba(255, 255, 255, 0.4), inset 0 4px 6px rgba(0,0,0,0.1);
-            /* Destroys the bottom "legs" of the border exactly behind the solid part of the earcups to prevent ANY rendering bleeds below */
-            clip-path: inset(-30px -30px 20px -30px);
         }
 
         .earcup {
+            /* Forced hardware acceleration with translateZ(0) to stop border-radius ghosting */
             position: absolute; top: 50%; transform: translateY(-50%) translateZ(0);
             width: 24px; height: 70px; border-radius: 12px;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.1) 100%);
@@ -139,13 +139,13 @@
             border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px var(--outer-glow-1);
             transition: box-shadow 0.8s ease;
-            /* Extra wrapper bounds to lock particle artifacts from inside elements */
-            overflow: hidden; 
+            overflow: hidden; /* Constrains inner glow details from bleeding */
+            will-change: transform, box-shadow;
         }
         
-        .earcup::after { 
+        .earcup::after { /* Shiny inner hardware */
             content: ''; position: absolute;
-            top: 25%; bottom: 25%; width: 4px; border-radius: 4px;
+            top: 15%; bottom: 15%; width: 4px; border-radius: 4px;
             background: rgba(255, 255, 255, 0.8);
         }
 
